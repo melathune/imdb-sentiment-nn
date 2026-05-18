@@ -1,5 +1,9 @@
 pandas
-scikit-learn
+numpy
 torch
+scikit-learn
+matplotlib
+tqdm
 joblib
 huggingface_hub
+nltk
