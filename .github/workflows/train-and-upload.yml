@@ -1,0 +1,67 @@
+name: Train and Upload to Hugging Face
+
+on:
+  push:
+    branches: [main, master]
+
+  workflow_dispatch:
+
+jobs:
+  train-and-upload:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run training
+        run: python train.py
+
+      - name: Upload to Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+
+        run: |
+          python - <<EOF
+          import os
+          from huggingface_hub import HfApi
+
+          token = os.environ["HF_TOKEN"]
+
+          repo_id = "melathune/imdb-sentiment-nn"
+
+          api = HfApi()
+
+          api.create_repo(
+              repo_id=repo_id,
+              token=token,
+              exist_ok=True
+          )
+
+          files = [
+              "model/model.pt",
+              "model/vectorizer.pkl",
+              "model/config.json",
+              "model/metrics.json"
+          ]
+
+          for file in files:
+              api.upload_file(
+                  path_or_fileobj=file,
+                  path_in_repo=file,
+                  repo_id=repo_id,
+                  token=token
+              )
+
+              print(f"Uploaded {file}")
+
+          print("Upload complete")
+          EOF
